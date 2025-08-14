@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+  VENDOR
+  COURIER
+}
+
+enum Language {
+  uz
+  ru
+  en
+}
+
+enum ReactionType {
+  LIKE
+  DISLIKE
+}
+
+enum CommentTargetType {
+  RESTAURANT
+  MENU_ITEM
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  ASSIGNED
+  DELIVERED
+  CANCELLED
+}
+
+
+
+enum DeliveryMethod {
+  DELIVERY
+  PICKUP
+}
+
+enum NotificationType {
+  ORDER_UPDATE
+  INFO
+  WARNING
+  SYSTEM
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  FACEBOOK
+}
+
+model User {
+  id             String          @id @default(uuid())
+  fullName       String          @unique
+  email          String          @unique
+  password       String?
+  role           UserRole        @default(USER)
+  phone          String?         @unique
+  avatarUrl      String?
+  telegramChatId String?         @unique
+  provider       AuthProvider    @default(LOCAL)
+  googleId       String?         @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  restaurants    Restaurant[]    @relation("UserRestaurants")
+  orders         Order[]         @relation("OrderUser")
+  courierOrders  Order[]         @relation("OrderCourier")
+  comments       Comment[]       @relation("UserComments")
+  notifications  Notification[]  @relation("UserNotifications")
+  reactions      Reaction[]      @relation("UserReactions")
+  favorites      Favorite[]      @relation("UserFavorites")
+  auditLogs      AuditLog[]      @relation("UserAuditLogs")
+  cartItems      CartItem[]     
+  courierProfile CourierProfile?
+}
+
+model Restaurant {
+  id                String     @id @default(uuid())
+  name              String     @unique
+  description       String?
+  images            String[]
+  locationLatitude  Float?    
+  locationLongitude Float?    
+  rating            Float      @default(0)
+  isApproved        Boolean    @default(false)
+  openTime          String?
+  closeTime         String?
+  ownerId           String
+  views             Int        @default(0)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  owner             User       @relation("UserRestaurants", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  menus             Menu[]
+  orders            Order[]
+  comments          Comment[]  @relation("RestaurantComments")
+}
+
+model Menu {
+  id           String     @id @default(uuid())
+  name         String     @unique
+  description  String?
+  price        Float
+  image        String?
+  isAvailable  Boolean    @default(true)
+  restaurantId String
+  categoryId   String?
+  views        Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  category     Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  orders       OrderItem[]
+  comments     Comment[]  @relation("MenuComments")
+  favorites    Favorite[]
+  cartItems    CartItem[]
+}
+
+model Order {
+  id              String         @id @default(uuid())
+  status          OrderStatus    @default(PENDING)
+  paymentStatus   PaymentStatus  @default(PENDING)
+  method          DeliveryMethod @default(DELIVERY)
+  userId          String
+  restaurantId    String
+  courierId       String?
+  totalAmount     Float
+  deliveryAddress String?
+  deliveredAt     DateTime?
+  cancelledReason String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user            User           @relation("OrderUser", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  courier         User?          @relation("OrderCourier", fields: [courierId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  restaurant      Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  menuId    String
+  quantity  Int
+  price     Float
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  menu      Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Comment {
+  id          String             @id @default(uuid())
+  content     String             @db.Text
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  authorId    String
+  targetType  CommentTargetType
+  parentId    String?
+  
+  targetRestaurantId String?
+  targetMenuId       String?
+  
+  author      User        @relation("UserComments", fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parent      Comment?    @relation("ReplyTo", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  replies     Comment[]   @relation("ReplyTo")
+
+  restaurant  Restaurant? @relation("RestaurantComments", fields: [targetRestaurantId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  menu        Menu?       @relation("MenuComments", fields: [targetMenuId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Reaction {
+  id         String       @id @default(uuid())
+  type       ReactionType @default(DISLIKE)
+  createdAt  DateTime     @default(now())
+  userId     String
+  targetId   String
+  targetType CommentTargetType
+
+  user       User         @relation("UserReactions", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  userId     String
+  message    String
+  type       NotificationType @default(INFO)
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  user       User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  menus       Menu[]
+}
+
+model Favorite {
+  id       String   @id @default(uuid())
+  userId   String
+  menuId   String
+
+  user     User     @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  menu     Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, menuId])
+}
+
+model Discount {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  percentage  Int
+  expiresAt   DateTime?
+  isActive    Boolean  @default(true)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  menuId    String
+  quantity  Int      @default(1)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  menu      Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, menuId])
+}
+
+model CourierProfile {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  vehicle    String?
+  locationLatitude  Float?
+  locationLongitude Float?
+  isAvailable Boolean @default(true)
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
