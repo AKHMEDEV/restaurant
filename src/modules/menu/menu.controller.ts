@@ -8,13 +8,16 @@ import {
   Put,
   UseGuards,
   ParseUUIDPipe,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { Roles } from 'src/decorators';
 import { UserRole } from 'generated/prisma';
 import { CheckRoleGuard } from 'src/guards';
 import { CreateMenuDto, UpdateMenuDto } from './dto';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('menus')
 export class MenuController {
@@ -61,5 +64,30 @@ export class MenuController {
   @Roles(UserRole.VENDOR)
   async deleteMenu(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.delete(id);
+  }
+
+  @Post(':menuId/images')
+  @ApiOperation({ summary: 'Upload multiple images for a menu' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        images: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+      required: ['images'],
+    },
+  })
+  @UseGuards(CheckRoleGuard)
+  @Roles(UserRole.VENDOR, UserRole.SUPER_ADMIN)
+  @UseInterceptors(FilesInterceptor('images', 10))
+  async uploadMenuImages(
+    @Param('menuId', ParseUUIDPipe) menuId: string,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.service.uploadMenuImages(menuId, files);
   }
 }

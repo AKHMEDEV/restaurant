@@ -44,7 +44,7 @@ export class CategoryService {
             price: true,
             isAvailable: true,
             description: true,
-            image: true,
+            images: true,
             restaurant: {
               select: {
                 name: true,

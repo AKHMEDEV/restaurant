@@ -21,10 +21,10 @@ export class CreateMenuDto {
   @IsNumber()
   price: number;
 
-  @ApiPropertyOptional({ example: 'https://example.com/image.jpg' })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  image?: string;
+  images?: string;
 
   @ApiPropertyOptional({ example: true })
   @IsOptional()

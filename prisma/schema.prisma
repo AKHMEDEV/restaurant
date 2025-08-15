@@ -120,7 +120,7 @@ model Menu {
   name         String     @unique
   description  String?
   price        Float
-  image        String?
+  images       String[]
   isAvailable  Boolean    @default(true)
   restaurantId String
   categoryId   String?
@@ -197,13 +197,16 @@ model Reaction {
   targetType CommentTargetType
 
   user       User         @relation("UserReactions", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, targetId, targetType, type])
 }
+
 
 model Notification {
   id         String           @id @default(uuid())
   userId     String
   message    String
-  type       NotificationType @default(INFO)
+  type       NotificationType @default(INFO)  
   isRead     Boolean          @default(false)
   createdAt  DateTime         @default(now())
 

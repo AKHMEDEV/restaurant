@@ -18,6 +18,8 @@ import { ReviewModule } from './modules/review/review.module';
 import { ReactionModule } from './modules/reaction/reaction.module';
 import { OrdersModule } from './modules/order/order.module';
 import { StatsModule } from './modules/stats/stats.module';
+import { CartModule } from './modules/cart';
+import { FavoriteModule } from './modules/favorites';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { StatsModule } from './modules/stats/stats.module';
     CourerModule,
     HelpersModule,
     ReviewModule,
+    FavoriteModule, 
+    CartModule,
     ReactionModule,
     categoryModule,
     StatsModule

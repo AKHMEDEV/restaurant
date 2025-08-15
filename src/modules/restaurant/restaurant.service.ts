@@ -188,10 +188,7 @@ export class RestaurantService {
     };
   }
 
-  async uploadRestaurantImages(
-    restaurantId: string,
-    files: Express.Multer.File[],
-  ) {
+  async uploadRestaurantImages( restaurantId: string,files: Express.Multer.File[]) {
     const restaurant = await this.prisma.restaurant.findUnique({
       where: { id: restaurantId.trim() },
     });
