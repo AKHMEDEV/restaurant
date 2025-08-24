@@ -45,7 +45,7 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup('docs', app, document);
   }
 
   const port = process.env.APP_PORT ? parseInt(process.env.APP_PORT, 10) : 5000;

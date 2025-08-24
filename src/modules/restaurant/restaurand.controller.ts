@@ -27,6 +27,8 @@ export class RestaurantController {
 
   @ApiOperation({ summary: 'get all restaurants info' })
   @Get()
+  @UseGuards(CheckAuthGuard, CheckRoleGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.VENDOR)
   async getAll() {
     return this.service.getAll();
   }

@@ -1,4 +1,3 @@
-// reaction.controller.ts
 import {
   Controller,
   Post,

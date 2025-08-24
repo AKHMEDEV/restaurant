@@ -28,6 +28,7 @@ import { FavoriteModule } from './modules/favorites';
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads', 'images'),
+      serveRoot: '/images',
     }),
     ThrottlerModule.forRoot([
       {

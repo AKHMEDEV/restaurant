@@ -12,3 +12,4 @@ export class LoginDto {
   @Length(4)
   password: string;
 }
+  

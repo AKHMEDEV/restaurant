@@ -15,7 +15,7 @@ import { UserService } from './user.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/decorators';
 import { UserRole } from 'generated/prisma';
-import { CheckRoleGuard } from 'src/guards';
+import { CheckAuthGuard,  CheckRoleGuard } from 'src/guards';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { Request } from 'express';
 
@@ -42,12 +42,24 @@ export class UserController {
 
   @Get('me')
   @ApiOperation({ summary: 'get user profile' })
-  async getMe(@Req() req: Request) {
+  @UseGuards(CheckAuthGuard)
+  async getProfile(@Req() req: Request) {
     // @ts-ignore
     const userId = req.user?.id;
     if (!userId) throw new UnauthorizedException('User not authenticated');
 
-    return this.service.findOneUser(userId);
+    return this.service.getProfile(userId);
+  }
+
+  @Put('me')
+  @ApiOperation({ summary: 'update current user profile' })
+  @UseGuards(CheckAuthGuard)
+  async updateProfile(@Req() req: Request, @Body() payload: UpdateUserDto) {
+    // @ts-ignore
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User not authenticated');
+
+    return this.service.updateUser(userId, payload);
   }
 
   @Get(':id')
@@ -58,16 +70,6 @@ export class UserController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.findOneUser(id);
-  }
-
-  @Put('me')
-  @ApiOperation({ summary: 'update current user profile' })
-  async updateMe(@Req() req: Request, @Body() payload: UpdateUserDto) {
-    // @ts-ignore
-    const userId = req.user?.id;
-    if (!userId) throw new UnauthorizedException('User not authenticated');
-
-    return this.service.updateUser(userId, payload);
   }
 
   @Put(':id')
@@ -83,6 +85,7 @@ export class UserController {
 
   @Delete('me')
   @ApiOperation({ summary: 'tipa logout ozizni ozi ochiradi' })
+  @UseGuards(CheckAuthGuard)
   async deleteMe(@Req() req: Request) {
     // @ts-ignore
     const userId = req.user?.id;

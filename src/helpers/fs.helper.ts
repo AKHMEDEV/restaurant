@@ -40,7 +40,7 @@ export class FsHelper {
 
     return {
       message: 'success',
-      fileUrl: path.join(subFolder, fileName),
+      fileUrl: `/${subFolder}/${fileName}`,
     };
   }
 

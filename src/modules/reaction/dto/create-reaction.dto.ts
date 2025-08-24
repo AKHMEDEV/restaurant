@@ -3,10 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { CommentTargetType } from 'generated/prisma';
 
 export class ToggleLikeDto {
-  @ApiProperty({
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'Target ID (restaurant yoki menu ID)',
-  })
+  @ApiProperty({})
   @IsNotEmpty()
   @IsString()
   targetId: string;

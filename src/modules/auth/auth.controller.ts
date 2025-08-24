@@ -22,7 +22,7 @@ import { GoogleRateLimitInterceptor } from './interceptors/google-rate-limit.int
 export class AuthController {
   constructor(private readonly service: AuthService) {}
 
-  @Post('register')
+  @Post('register') 
   @ApiOperation({ summary: 'users register' })
   async register(
     @Body() dto: RegisterDto,

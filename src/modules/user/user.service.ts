@@ -122,14 +122,14 @@ export class UserService implements OnModuleInit {
         email: 'john@gmail.com',
         password: 'john123',
         role: UserRole.SUPER_ADMIN,
-        phone: '+998333053334',
+        phone: '+99899999999',
       },
       {
         fullName: 'ahmed',
         email: 'ahmed@gmail.com',
         password: 'ahmed123',
         role: UserRole.ADMIN,
-        phone: '+998333053333',
+        phone: '+998999999999',
       },
     ];
 
@@ -154,5 +154,79 @@ export class UserService implements OnModuleInit {
         console.log(`🟡 ${user.email} already exists`);
       }
     }
+  }
+
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        avatarUrl: true,
+        telegramChatId: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            orders: true,
+            comments: true,
+            favorites: true,
+            cartItems: true,
+          },
+        },
+        orders: {
+          take: 5,
+          select: {
+            id: true,
+            status: true,
+            totalAmount: true,
+            createdAt: true,
+            items: {
+              select: {
+                id: true,
+                quantity: true,
+                price: true,
+                menu: {
+                  select: { id: true, name: true, price: true, images: true },
+                },
+              },
+            },
+          },
+        },
+        comments: {
+          take: 5,
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            restaurant: { select: { id: true, name: true } }, // relation
+            menu: { select: { id: true, name: true } }, // relation
+          },
+        },
+        favorites: {
+          take: 5,
+          include: {
+            menu: {
+              select: { id: true, name: true, price: true, images: true },
+            },
+          },
+        },
+        courierProfile: {
+          select: {
+            vehicle: true,
+            locationLatitude: true,
+            locationLongitude: true,
+            isAvailable: true,
+          },
+        },
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    return { message: 'Profile fetched successfully', data: user };
   }
 }
